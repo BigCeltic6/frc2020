@@ -29,6 +29,13 @@ public class Drivetrain extends SubsystemBase
         this.FRONT_RIGHT_DRIVE_MOTOR = new PWMVictorSPX(2);
         this.BACK_RIGHT_DRIVE_MOTOR = new PWMVictorSPX(3);
     }
+
+    public void drive(final double leftOutput, final double rightOutput) 
+    {
+        runLeftDrive(leftOutput);
+        runRightDrive(rightOutput);
+
+    }
     
     public void runRightDrive(final double output) {
         this.FRONT_RIGHT_DRIVE_MOTOR.set(-output);

@@ -8,6 +8,7 @@
 package frc.robot;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
@@ -128,6 +129,7 @@ public class Robot extends TimedRobot
    */
   @Override
   public void disabledInit() {
+    enableMotors(false);
   }
 
   @Override
@@ -140,7 +142,11 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousInit() {
 
-    startTime = Timer.getFPGATimestamp();
+    enableMotors(true);
+
+    topLeft.setSelectedSensorPosition(0,0,10);
+    topRight.setSelectedSensorPosition(0,0,10);
+    topIntakeMotor.setSelectedSensorPosition(0,0,10);
 
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
@@ -157,22 +163,21 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousPeriodic() {
 
-    double time = Timer.getFPGATimestamp();
+    double leftPosition = topLeft.getSelectedSensorPosition() * kDriveTick2Feet;
+    double rightPosition = topRight.getSelectedSensorPosition() * kDriveTick2Feet;
+    double distance = (leftPosition * rightPosition) / 2;
+    
 
-    if(time - startTime < 3)
+    if(distance < 10) 
     {
-      FRONT_LEFT_DRIVE_MOTOR.set(CONTROLMODE, 0.6);
-      BACK_LEFT_DRIVE_MOTOR.set(CONTROLMODE, 0.6);
-      FRONT_RIGHT_DRIVE_MOTOR.set(CONTROLMODE, 0.6);
-      BACK_RIGHT_DRIVE_MOTOR.set(CONTROLMODE, 0.6);
-    } 
+      drivetrain.drive(0.6,0.6);
+    }
     else
     {
-      FRONT_LEFT_DRIVE_MOTOR.set(CONTROLMODE, 0);
-      BACK_LEFT_DRIVE_MOTOR.set(CONTROLMODE, 0);
-      FRONT_RIGHT_DRIVE_MOTOR.set(CONTROLMODE, 0);
-      BACK_RIGHT_DRIVE_MOTOR.set(CONTROLMODE, 0);
+      drivetrain.drive(0,0);
     }
+
+///Gradual Stop Fix needed
 
   }
 
@@ -205,5 +210,29 @@ public class Robot extends TimedRobot
    */
   @Override
   public void testPeriodic() {
+  }
+
+  
+
+  private void enableMotors(boolean on) {
+
+    NeutralMode mode;
+
+    if(on) 
+    {
+      mode = NeutralMode.Brake;
+    }
+    else 
+    {
+      mode = NeutralMode.Coast;
+    }
+
+    topLeft.setNeutralMode(mode);
+    topRight.setNeutralMode(mode);
+    bottomLeft.setNeutralMode(mode);
+    bottomRight.setNeutralMode(mode);  
+    topIntakeMotor.setNeutralMode(mode);
+    bottomIntakeMotor.setNeutralMode(mode);
+
   }
 }
