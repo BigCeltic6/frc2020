@@ -80,8 +80,17 @@ public class Robot extends TimedRobot
   
   private final Joystick joy1 = new Joystick(0);
   private final Encoder encoder = new Encoder(0, 1, false, EncodingType.k4X);
-  final double kP = 0.5;
+
+
+  final double kP = 0.5; //Constants here need to be fixed to our robots mass!!!!! (FIXME)
+  final double kI = 0.5;
+  final double kD = 0.1;
+  final double iLimit = 1;
+
   double setpoint = 1;
+  double errorSum = 0;
+  double lastTimestamp = 0;
+  double lastError = 0;
 
   
   /**
@@ -155,6 +164,9 @@ public class Robot extends TimedRobot
   public void autonomousInit() {
 
     encoder.reset();
+    errorSum = 0;
+    lastError = 0;
+    lastTimestamp = Timer.getFPGATimestamp();
     enableMotors(true);
 
     topLeft.setSelectedSensorPosition(0,0,10);
@@ -183,14 +195,25 @@ public class Robot extends TimedRobot
 
     //calculations
     double error = setpoint - sensorPosition;
+    double dt = Timer.getFPGATimestamp() - lastTimestamp;
 
-    double outputSpeed = kP * error;
+    if(Math.abs(error)<iLimit){
+    errorSum += error * dt;
+    }
+
+    double errorRate = (error - lastError) / dt;
+
+    double outputSpeed = kP * error + kI * errorSum + kD * errorRate;
 
     //OUTPUT SPEED IS USED FOR THE GENTLE STOP
     //TEMP (FIXME)
     
     topLeft.set(outputSpeed);
     topRight.set(outputSpeed);
+
+    //Udate last time variables
+    lastTimestamp = Timer.getFPGATimestamp();
+
     
 
     final double leftPosition = topLeft.getSelectedSensorPosition() * kDriveTick2Feet;
