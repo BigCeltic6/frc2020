@@ -7,6 +7,8 @@
 
 package frc.robot;
 
+//BOTTOM MOTORS AREN"T IN CODE/NOT ATTACHED TO FRONT IN CASE WE WANT TO USE SEPERATLY
+
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
@@ -16,9 +18,12 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
 import edu.wpi.first.wpilibj.Compressor;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
+import edu.wpi.first.wpilibj.CounterBase.EncodingType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -56,23 +61,28 @@ public class Robot extends TimedRobot
 
   private RobotContainer m_robotContainer;
 
-  private TalonFX FRONT_LEFT_DRIVE_MOTOR = new TalonFX(0);
-  private TalonFX BACK_LEFT_DRIVE_MOTOR = new TalonFX(0);
-  private TalonFX FRONT_RIGHT_DRIVE_MOTOR = new TalonFX(0);
-  private TalonFX BACK_RIGHT_DRIVE_MOTOR = new TalonFX(0);
-  private TalonFXControlMode CONTROLMODE = TalonFXControlMode.PercentOutput;
+  private final TalonFX FRONT_LEFT_DRIVE_MOTOR = new TalonFX(0);
+  private final TalonFX BACK_LEFT_DRIVE_MOTOR = new TalonFX(0);
+  private final TalonFX FRONT_RIGHT_DRIVE_MOTOR = new TalonFX(0);
+  private final TalonFX BACK_RIGHT_DRIVE_MOTOR = new TalonFX(0);
+  private final TalonFXControlMode CONTROLMODE = TalonFXControlMode.PercentOutput;
   private double startTime;
-  private WPI_TalonSRX topLeft = new WPI_TalonSRX(0);
-  private WPI_TalonSRX topRight = new WPI_TalonSRX(2);
-  private WPI_VictorSPX bottomLeft = new WPI_VictorSPX(1);
-  private WPI_VictorSPX bottomRight = new WPI_VictorSPX(3);
+  private final WPI_TalonSRX topLeft = new WPI_TalonSRX(0);
+  private final WPI_TalonSRX topRight = new WPI_TalonSRX(2);
+  private final WPI_VictorSPX bottomLeft = new WPI_VictorSPX(1);
+  private final WPI_VictorSPX bottomRight = new WPI_VictorSPX(3);
 
-  private WPI_TalonSRX topIntakeMotor = new WPI_TalonSRX(4);
-  private WPI_TalonSRX bottomIntakeMotor = new WPI_TalonSRX(5);
+  private final WPI_TalonSRX topIntakeMotor = new WPI_TalonSRX(4);
+  private final WPI_TalonSRX bottomIntakeMotor = new WPI_TalonSRX(5);
 
   private final double kDriveTick2Feet = 1.0 / 4069 * 6 * Math.PI / 12;
   private final double kArmTick2Deg = 306.0 / 512 * 26 / 42 * 18 / 60 * 18 / 84;
   
+  private final Joystick joy1 = new Joystick(0);
+  private final Encoder encoder = new Encoder(0, 1, false, EncodingType.k4X);
+  final double kP = 0.5;
+  double setpoint = 1;
+
   
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -118,6 +128,8 @@ public class Robot extends TimedRobot
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
+
+    SmartDashboard.putNumber("encoder value",encoder.get() * kDriveTick2Feet);
     CommandScheduler.getInstance().run();
     SmartDashboard.putNumber("Intake Encoder Value", topIntakeMotor.getSelectedSensorPosition() * kArmTick2Deg);
     SmartDashboard.putNumber("Left Drive Encoder Value", topLeft.getSelectedSensorPosition() * kDriveTick2Feet);
@@ -142,6 +154,7 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousInit() {
 
+    encoder.reset();
     enableMotors(true);
 
     topLeft.setSelectedSensorPosition(0,0,10);
@@ -163,9 +176,26 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousPeriodic() {
 
-    double leftPosition = topLeft.getSelectedSensorPosition() * kDriveTick2Feet;
-    double rightPosition = topRight.getSelectedSensorPosition() * kDriveTick2Feet;
-    double distance = (leftPosition * rightPosition) / 2;
+    //find when joystick is at 0/no forawrd/backward input(FIXME)
+
+    //get sensor postion
+    double sensorPosition = encoder.get() * kDriveTick2Feet;
+
+    //calculations
+    double error = setpoint - sensorPosition;
+
+    double outputSpeed = kP * error;
+
+    //OUTPUT SPEED IS USED FOR THE GENTLE STOP
+    //TEMP (FIXME)
+    
+    topLeft.set(outputSpeed);
+    topRight.set(outputSpeed);
+    
+
+    final double leftPosition = topLeft.getSelectedSensorPosition() * kDriveTick2Feet;
+    final double rightPosition = topRight.getSelectedSensorPosition() * kDriveTick2Feet;
+    final double distance = (leftPosition * rightPosition) / 2;
     
 
     if(distance < 10) 
@@ -214,7 +244,7 @@ public class Robot extends TimedRobot
 
   
 
-  private void enableMotors(boolean on) {
+  private void enableMotors(final boolean on) {
 
     NeutralMode mode;
 
