@@ -83,13 +83,17 @@ public class Robot extends TimedRobot
   final double kD = 0.1;
   final double iLimit = 1;
 
-  double setpoint = 1;
+  double distance = 10;
+  double setpoint = 45;
   double errorSum = 0;
   double lastTimestamp = 0;
   double lastError = 0;
+  double outputSpeed = 0;
 
+  boolean turnLeft = false;
+  boolean turnRight = true;
   boolean isDriving = false;
-  boolean isTurning = false;
+  boolean isTurning = true;
   boolean isOuttaking = false;
 
   
@@ -203,13 +207,13 @@ public class Robot extends TimedRobot
 
       double errorRate = (error - lastError) / dt;
 
-      double outputSpeed = kP * error + kI * errorSum + kD * errorRate;
+      outputSpeed = kP * error + kI * errorSum + kD * errorRate;
 
       //OUTPUT SPEED IS USED FOR THE GENTLE STOP
 
       
       Robot.drivetrain.runLeftDrive(outputSpeed);
-      Robot.drivetrain.runLeftDrive(outputSpeed);
+      Robot.drivetrain.runRightDrive(outputSpeed);
     }
     
 else
@@ -228,13 +232,19 @@ else
 
       double errorRate = (error - lastError) / dt;
 
-      double outputSpeed = kP * error + kI * errorSum + kD * errorRate;
+      outputSpeed = kP * error + kI * errorSum + kD * errorRate;
 
       //OUTPUT SPEED IS USED FOR THE GENTLE STOP
  
-
-      Robot.drivetrain.runLeftDrive(outputSpeed);
-      Robot.drivetrain.runLeftDrive(outputSpeed);
+      if(turnLeft == true){
+        Robot.drivetrain.runLeftDrive(-outputSpeed);
+        Robot.drivetrain.runRightDrive(outputSpeed);
+      }
+      else
+      if(turnRight == true){
+        Robot.drivetrain.runLeftDrive(outputSpeed);
+        Robot.drivetrain.runRightDrive(-outputSpeed);
+      }
     }
 
      //Outtaking in auto
@@ -242,8 +252,30 @@ else
 
     }
 
-    //IF Statements
-    
+    //Macro Procedure If Statements
+    if(outputSpeed == 0 && isTurning == true && turnRight == true) 
+    {
+      turnRight = false;
+      isTurning = false;
+      setpoint = Math.sqrt(2 * distance * distance);
+      isDriving = true;      
+    }
+    else
+    if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * distance * distance)) 
+    {
+      isDriving = false;
+      turnLeft = true;
+      setpoint = 45;
+      isTurning = true;
+    }
+    else
+    if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
+    {
+      isDriving = false;
+      turnLeft = true;
+      setpoint = 45;
+      isTurning = true;
+    }
 
 
     //Udate last time variables
