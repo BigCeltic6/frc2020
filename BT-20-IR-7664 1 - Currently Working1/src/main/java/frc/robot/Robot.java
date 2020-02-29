@@ -34,6 +34,7 @@ import frc.robot.commands.OperateIntake;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Drivetrain.talonDrive;
 //import frc.robot.subsystems.Intake;
 //import frc.robot.subsystems.Drivetrain;
 /**
@@ -60,11 +61,7 @@ public class Robot extends TimedRobot
   SendableChooser<Command> m_chooser;
 
   private RobotContainer m_robotContainer;
-
-  private final TalonFX FRONT_LEFT_DRIVE_MOTOR = new TalonFX(0);
-  private final TalonFX BACK_LEFT_DRIVE_MOTOR = new TalonFX(0);
-  private final TalonFX FRONT_RIGHT_DRIVE_MOTOR = new TalonFX(0);
-  private final TalonFX BACK_RIGHT_DRIVE_MOTOR = new TalonFX(0);
+ 
   private final TalonFXControlMode CONTROLMODE = TalonFXControlMode.PercentOutput;
   private double startTime;
   private final WPI_TalonSRX topLeft = new WPI_TalonSRX(0);
@@ -76,9 +73,8 @@ public class Robot extends TimedRobot
   private final WPI_TalonSRX bottomIntakeMotor = new WPI_TalonSRX(5);
 
   private final double kDriveTick2Feet = 1.0 / 4069 * 6 * Math.PI / 12;
-  private final double kArmTick2Deg = 306.0 / 512 * 26 / 42 * 18 / 60 * 18 / 84;
+  private final double kDriveTick2Deg = 306.0 / 512 * 26 / 42 * 18 / 60 * 18 / 84;
   
-  private final Joystick joy1 = new Joystick(0);
   private final Encoder encoder = new Encoder(0, 1, false, EncodingType.k4X);
 
 
@@ -91,6 +87,10 @@ public class Robot extends TimedRobot
   double errorSum = 0;
   double lastTimestamp = 0;
   double lastError = 0;
+
+  boolean isDriving = false;
+  boolean isTurning = false;
+  boolean isOuttaking = false;
 
   
   /**
@@ -140,7 +140,7 @@ public class Robot extends TimedRobot
 
     SmartDashboard.putNumber("encoder value",encoder.get() * kDriveTick2Feet);
     CommandScheduler.getInstance().run();
-    SmartDashboard.putNumber("Intake Encoder Value", topIntakeMotor.getSelectedSensorPosition() * kArmTick2Deg);
+    SmartDashboard.putNumber("Intake Encoder Value", topIntakeMotor.getSelectedSensorPosition() * kDriveTick2Deg);
     SmartDashboard.putNumber("Left Drive Encoder Value", topLeft.getSelectedSensorPosition() * kDriveTick2Feet);
     SmartDashboard.putNumber("Right Drive Encoder Value", topRight.getSelectedSensorPosition() * kDriveTick2Feet);
   }
@@ -162,7 +162,7 @@ public class Robot extends TimedRobot
    */
   @Override
   public void autonomousInit() {
-
+    
     encoder.reset();
     errorSum = 0;
     lastError = 0;
@@ -188,49 +188,74 @@ public class Robot extends TimedRobot
   @Override
   public void autonomousPeriodic() {
 
-    //find when joystick is at 0/no forawrd/backward input(FIXME)
+    //Driving in Auto
+    if(isDriving == true && isTurning == false && isOuttaking == false) {
+      //get sensor postion
+      double sensorPosition = encoder.get() * kDriveTick2Feet;
 
-    //get sensor postion
-    double sensorPosition = encoder.get() * kDriveTick2Feet;
+      //calculations
+      double error = setpoint - sensorPosition;
+      double dt = Timer.getFPGATimestamp() - lastTimestamp;
 
-    //calculations
-    double error = setpoint - sensorPosition;
-    double dt = Timer.getFPGATimestamp() - lastTimestamp;
+      if(Math.abs(error)<iLimit){
+      errorSum += error * dt;
+      }
 
-    if(Math.abs(error)<iLimit){
-    errorSum += error * dt;
+      double errorRate = (error - lastError) / dt;
+
+      double outputSpeed = kP * error + kI * errorSum + kD * errorRate;
+
+      //OUTPUT SPEED IS USED FOR THE GENTLE STOP
+
+      
+      Robot.drivetrain.runLeftDrive(outputSpeed);
+      Robot.drivetrain.runLeftDrive(outputSpeed);
+    }
+    
+else
+    //Turning in auto
+    if(isDriving == false && isTurning == true && isOuttaking == false) {
+      //get sensor postion
+      double sensorPosition = encoder.get() * kDriveTick2Deg;
+
+      //calculations
+      double error = setpoint - sensorPosition;
+      double dt = Timer.getFPGATimestamp() - lastTimestamp;
+
+      if(Math.abs(error)<iLimit){
+      errorSum += error * dt;
+      }
+
+      double errorRate = (error - lastError) / dt;
+
+      double outputSpeed = kP * error + kI * errorSum + kD * errorRate;
+
+      //OUTPUT SPEED IS USED FOR THE GENTLE STOP
+ 
+
+      Robot.drivetrain.runLeftDrive(outputSpeed);
+      Robot.drivetrain.runLeftDrive(outputSpeed);
     }
 
-    double errorRate = (error - lastError) / dt;
+     //Outtaking in auto
+     if(isDriving == false && isTurning == false && isOuttaking == true) {
 
-    double outputSpeed = kP * error + kI * errorSum + kD * errorRate;
+    }
 
-    //OUTPUT SPEED IS USED FOR THE GENTLE STOP
-    //TEMP (FIXME)
+    //IF Statements
     
-    topLeft.set(outputSpeed);
-    topRight.set(outputSpeed);
+
 
     //Udate last time variables
-    lastTimestamp = Timer.getFPGATimestamp();
-
-    
+    lastTimestamp = Timer.getFPGATimestamp();  
 
     final double leftPosition = topLeft.getSelectedSensorPosition() * kDriveTick2Feet;
     final double rightPosition = topRight.getSelectedSensorPosition() * kDriveTick2Feet;
-    final double distance = (leftPosition * rightPosition) / 2;
-    
+  
 
-    if(distance < 10) 
-    {
-      drivetrain.drive(0.6,0.6);
-    }
-    else
-    {
-      drivetrain.drive(0,0);
-    }
+   
 
-///Gradual Stop Fix needed
+
 
   }
 
