@@ -271,10 +271,10 @@ else
     else
     if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
     {
-      isDriving = false;
-      turnLeft = true;
-      setpoint = 45;
-      isTurning = true;
+      turnLeft = false;
+      isTurning = false;
+      setpoint = distance - 1;
+      isDriving = true;
     }
 
 
