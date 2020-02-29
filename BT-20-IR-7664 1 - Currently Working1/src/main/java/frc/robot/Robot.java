@@ -83,7 +83,8 @@ public class Robot extends TimedRobot
   final double kD = 0.1;
   final double iLimit = 1;
 
-  double distance = 10;
+  double loadDistance = 10;
+  double scoreDistance = 100;
   double setpoint = 45;
   double errorSum = 0;
   double lastTimestamp = 0;
@@ -97,6 +98,8 @@ public class Robot extends TimedRobot
   boolean isDriving = false;
   boolean isTurning = true;
   boolean isOuttaking = false;
+  boolean isScoring = false;
+  boolean isLoading = true;
 
   
   /**
@@ -255,56 +258,70 @@ else
     }
 
     //Macro Procedure If Statements
-    if(startRight == true) {
-      if(outputSpeed == 0 && isTurning == true && turnRight == true) 
-      {
-        turnRight = false;
-        isTurning = false;
-        setpoint = Math.sqrt(2 * distance * distance);
-        isDriving = true;      
+    if(isLoading == true) {
+      if(startRight == true) {
+        if(outputSpeed == 0 && isTurning == true && turnRight == true) 
+        {
+          turnRight = false;
+          isTurning = false;
+          setpoint = Math.sqrt(2 * loadDistance * loadDistance);
+          isDriving = true;      
+        }
+        else
+        if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * loadDistance * loadDistance)) 
+        {
+          isDriving = false;
+          turnLeft = true;
+          setpoint = 45;
+          isTurning = true;
+        }
+        else
+        if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
+        {
+          turnLeft = false;
+          isTurning = false;
+          setpoint = loadDistance - 1;
+          isDriving = true;
+          //UNLOAD CODE (FIXME)
+        }
       }
       else
-      if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * distance * distance)) 
-      {
-        isDriving = false;
-        turnLeft = true;
-        setpoint = 45;
-        isTurning = true;
-      }
-      else
-      if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
-      {
-        turnLeft = false;
-        isTurning = false;
-        setpoint = distance - 1;
-        isDriving = true;
+      if(startLeft == true) {
+        if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
+        {
+          turnLeft = false;
+          isTurning = false;
+          setpoint = Math.sqrt(2 * loadDistance * loadDistance);
+          isDriving = true;      
+        }
+        else
+        if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * loadDistance * loadDistance)) 
+        {
+          isDriving = false;
+          turnRight = true;
+          setpoint = 45;
+          isTurning = true;
+        }
+        else
+        if(outputSpeed == 0 && isTurning == true && turnRight == true) 
+        {
+          turnRight = false;
+          isTurning = false;
+          setpoint = loadDistance - 1;
+          isDriving = true;
+          //UNLOAD CODE (FIXME)
+        }
       }
     }
     else
-    if(startLeft == true) {
-      if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
-      {
-        turnLeft = false;
-        isTurning = false;
-        setpoint = Math.sqrt(2 * distance * distance);
-        isDriving = true;      
-      }
-      else
-      if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * distance * distance)) 
-      {
-        isDriving = false;
-        turnRight = true;
-        setpoint = 45;
-        isTurning = true;
-      }
-      else
-      if(outputSpeed == 0 && isTurning == true && turnRight == true) 
-      {
-        turnRight = false;
-        isTurning = false;
-        setpoint = distance - 1;
-        isDriving = true;
-      }
+    if(isScoring == true) 
+    {             
+        if(outputSpeed == 0)
+        {
+          //MUST SET setpoint = scoreDistnce AND isDrving = true when chossing scoring auto (FIXME)
+          isDriving = false;
+          //UNLOAD CODE (FIXME)
+        }    
     }
 
     //Udate last time variables
