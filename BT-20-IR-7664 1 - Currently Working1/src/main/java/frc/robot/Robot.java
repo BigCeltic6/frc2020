@@ -90,6 +90,8 @@ public class Robot extends TimedRobot
   double lastError = 0;
   double outputSpeed = 0;
 
+  boolean startLeft = false;
+  boolean startRight = true;
   boolean turnLeft = false;
   boolean turnRight = true;
   boolean isDriving = false;
@@ -253,30 +255,57 @@ else
     }
 
     //Macro Procedure If Statements
-    if(outputSpeed == 0 && isTurning == true && turnRight == true) 
-    {
-      turnRight = false;
-      isTurning = false;
-      setpoint = Math.sqrt(2 * distance * distance);
-      isDriving = true;      
+    if(startRight == true) {
+      if(outputSpeed == 0 && isTurning == true && turnRight == true) 
+      {
+        turnRight = false;
+        isTurning = false;
+        setpoint = Math.sqrt(2 * distance * distance);
+        isDriving = true;      
+      }
+      else
+      if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * distance * distance)) 
+      {
+        isDriving = false;
+        turnLeft = true;
+        setpoint = 45;
+        isTurning = true;
+      }
+      else
+      if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
+      {
+        turnLeft = false;
+        isTurning = false;
+        setpoint = distance - 1;
+        isDriving = true;
+      }
     }
     else
-    if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * distance * distance)) 
-    {
-      isDriving = false;
-      turnLeft = true;
-      setpoint = 45;
-      isTurning = true;
+    if(startLeft == true) {
+      if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
+      {
+        turnLeft = false;
+        isTurning = false;
+        setpoint = Math.sqrt(2 * distance * distance);
+        isDriving = true;      
+      }
+      else
+      if(outputSpeed == 0 && isDriving == true && setpoint == Math.sqrt(2 * distance * distance)) 
+      {
+        isDriving = false;
+        turnRight = true;
+        setpoint = 45;
+        isTurning = true;
+      }
+      else
+      if(outputSpeed == 0 && isTurning == true && turnRight == true) 
+      {
+        turnRight = false;
+        isTurning = false;
+        setpoint = distance - 1;
+        isDriving = true;
+      }
     }
-    else
-    if(outputSpeed == 0 && isTurning == true && turnLeft == true) 
-    {
-      turnLeft = false;
-      isTurning = false;
-      setpoint = distance - 1;
-      isDriving = true;
-    }
-
 
     //Udate last time variables
     lastTimestamp = Timer.getFPGATimestamp();  
