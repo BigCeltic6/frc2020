@@ -6,30 +6,32 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.commands.ArcadeDrive;
+import edu.wpi.first.wpilibj.PWMVictorSPX;
 
 public class Drivetrain extends SubsystemBase
 {
     //Victor Motor Indication
-    VictorSP FRONT_LEFT_DRIVE_MOTOR;
-    VictorSP BACK_LEFT_DRIVE_MOTOR;
-    VictorSP FRONT_RIGHT_DRIVE_MOTOR;
-    VictorSP BACK_RIGHT_DRIVE_MOTOR;
+    PWMVictorSPX FRONT_LEFT_DRIVE_MOTOR;
+    PWMVictorSPX BACK_LEFT_DRIVE_MOTOR;
+    PWMVictorSPX FRONT_RIGHT_DRIVE_MOTOR;
+    PWMVictorSPX BACK_RIGHT_DRIVE_MOTOR;
 
     SpeedControllerGroup rightDrive;
     SpeedControllerGroup leftDrive;
     
     //Secondary Victor Motor Indication
     public Drivetrain() {
-        this.FRONT_LEFT_DRIVE_MOTOR = new VictorSP(0);
-        this.BACK_LEFT_DRIVE_MOTOR = new VictorSP(1);
-        this.FRONT_RIGHT_DRIVE_MOTOR = new VictorSP(2);
-        this.BACK_RIGHT_DRIVE_MOTOR = new VictorSP(3);
+        this.FRONT_LEFT_DRIVE_MOTOR = new PWMVictorSPX(0);
+        this.BACK_LEFT_DRIVE_MOTOR = new PWMVictorSPX(1);
+        this.FRONT_RIGHT_DRIVE_MOTOR = new PWMVictorSPX(2);
+        this.BACK_RIGHT_DRIVE_MOTOR = new PWMVictorSPX(3);
     }
     
     public void runRightDrive(final double output) {
