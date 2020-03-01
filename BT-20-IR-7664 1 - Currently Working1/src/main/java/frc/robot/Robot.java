@@ -159,7 +159,7 @@ public class Robot extends TimedRobot
    */
   @Override
   public void disabledInit() {
-    enableMotors(false);
+   
   }
 
   @Override
@@ -171,17 +171,17 @@ public class Robot extends TimedRobot
    */
   @Override
   public void autonomousInit() {
-    
+    /*
     encoder.reset();
     errorSum = 0;
     lastError = 0;
     lastTimestamp = Timer.getFPGATimestamp();
-    enableMotors(true);
+   
 
     topLeft.setSelectedSensorPosition(0,0,10);
     topRight.setSelectedSensorPosition(0,0,10);
     topIntakeMotor.setSelectedSensorPosition(0,0,10);
-
+*/
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
@@ -196,7 +196,7 @@ public class Robot extends TimedRobot
    */
   @Override
   public void autonomousPeriodic() {
-
+/*
     //Driving in Auto
     if(isDriving == true && isTurning == false && isOuttaking == false) {
       //get sensor postion
@@ -333,7 +333,7 @@ else
 
    
 
-
+*/
 
   }
 
@@ -354,7 +354,7 @@ else
   @Override
   public void teleopPeriodic() {
 
-      double 
+     
 
     }
 
@@ -369,29 +369,10 @@ else
    */
   @Override
   public void testPeriodic() {
+
   }
 
   
 
-  private void enableMotors(final boolean on) {
-
-    NeutralMode mode;
-
-    if(on) 
-    {
-      mode = NeutralMode.Brake;
-    }
-    else 
-    {
-      mode = NeutralMode.Coast;
-    }
-
-    topLeft.setNeutralMode(mode);
-    topRight.setNeutralMode(mode);
-    bottomLeft.setNeutralMode(mode);
-    bottomRight.setNeutralMode(mode);  
-    topIntakeMotor.setNeutralMode(mode);
-    bottomIntakeMotor.setNeutralMode(mode);
-
-  }
+ 
 }
