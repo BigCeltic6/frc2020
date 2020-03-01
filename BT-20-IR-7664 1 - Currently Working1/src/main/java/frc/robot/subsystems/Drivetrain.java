@@ -6,32 +6,39 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.commands.ArcadeDrive;
-import edu.wpi.first.wpilibj.PWMVictorSPX;
+import edu.wpi.first.hal.FRCNetComm;
+import edu.wpi.first.hal.HAL;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class Drivetrain extends SubsystemBase
 {
     //Victor Motor Indication
-    PWMVictorSPX FRONT_LEFT_DRIVE_MOTOR;
-    PWMVictorSPX BACK_LEFT_DRIVE_MOTOR;
-    PWMVictorSPX FRONT_RIGHT_DRIVE_MOTOR;
-    PWMVictorSPX BACK_RIGHT_DRIVE_MOTOR;
+    VictorSP FRONT_LEFT_DRIVE_MOTOR;
+    VictorSP BACK_LEFT_DRIVE_MOTOR;
+    VictorSP FRONT_RIGHT_DRIVE_MOTOR;
+    VictorSP BACK_RIGHT_DRIVE_MOTOR;
 
     SpeedControllerGroup rightDrive;
     SpeedControllerGroup leftDrive;
     
+
     //Secondary Victor Motor Indication
     public Drivetrain() {
-        this.FRONT_LEFT_DRIVE_MOTOR = new PWMVictorSPX(0);
-        this.BACK_LEFT_DRIVE_MOTOR = new PWMVictorSPX(1);
-        this.FRONT_RIGHT_DRIVE_MOTOR = new PWMVictorSPX(2);
-        this.BACK_RIGHT_DRIVE_MOTOR = new PWMVictorSPX(3);
+        this.FRONT_LEFT_DRIVE_MOTOR = new VictorSP(0);
+        this.BACK_LEFT_DRIVE_MOTOR = new VictorSP(1);
+        this.FRONT_RIGHT_DRIVE_MOTOR = new VictorSP(2);
+        this.BACK_RIGHT_DRIVE_MOTOR = new VictorSP(3);
     }
     
     public void runRightDrive(final double output) {
@@ -60,6 +67,7 @@ public class Drivetrain extends SubsystemBase
 
         TalonFX drivetrain;
         TalonFXControlMode controlMode = TalonFXControlMode.PercentOutput;
+
 
             //Talon Motor Controller Indication
 
@@ -105,5 +113,7 @@ public class Drivetrain extends SubsystemBase
         public int getBackLeftDriveMotor(){
             return(this.BACK_LEFT_DRIVE_MOTOR.getSelectedSensorPosition());
         }
+
+
     }
 }

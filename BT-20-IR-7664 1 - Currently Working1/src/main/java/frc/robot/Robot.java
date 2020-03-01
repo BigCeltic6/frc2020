@@ -17,9 +17,12 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP;
@@ -28,6 +31,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj.GyroBase;
 import frc.robot.commands.ArcadeDrive;
 import frc.robot.commands.OperateElevatord;
 import frc.robot.commands.OperateIntake;
@@ -35,6 +39,8 @@ import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Drivetrain.talonDrive;
+
+
 //import frc.robot.subsystems.Intake;
 //import frc.robot.subsystems.Drivetrain;
 /**
@@ -72,10 +78,21 @@ public class Robot extends TimedRobot
   private final WPI_TalonSRX topIntakeMotor = new WPI_TalonSRX(4);
   private final WPI_TalonSRX bottomIntakeMotor = new WPI_TalonSRX(5);
 
-  private final double kDriveTick2Feet = 1.0 / 4069 * 6 * Math.PI / 12;
+  private final double kDriveTick2Feet = 1.0 / 4069 * 6 * 3.141592764 / 12;
   private final double kDriveTick2Deg = 306.0 / 512 * 26 / 42 * 18 / 60 * 18 / 84;
   
   private final Encoder encoder = new Encoder(0, 1, false, EncodingType.k4X);
+
+  private static final double kAngleSetpoint = 0.0;
+  private static final double kPgyro = 0.005; // propotional turning constant
+  private static final double kVoltsPerDegreePerSecond = 0.0128;
+  private static final SPI.Port kGyroPort = SPI.Port.kOnboardCS0;
+
+  private static final double kSamplePeriod = 0.001;
+  public static final double kCalibrationSampleTime = 5.0;
+  private static final double kDegreePerSecondPerLSB = 0.0125;
+
+  private ADXRS450_Gyro m_gyro = new ADXRS450_Gyro(kGyroPort);
 
 
   final double kP = 0.5; //Constants here need to be fixed to our robots mass!!!!! (FIXME)
@@ -101,12 +118,12 @@ public class Robot extends TimedRobot
   boolean isScoring = false;
   boolean isLoading = true;
 
-  
+    
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
-  @Override
+
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
@@ -117,10 +134,8 @@ public class Robot extends TimedRobot
     topRight.setInverted(true);
     topIntakeMotor.setInverted(true);
 
-    //initialize Encoders
-    topLeft.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
-    topRight.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
-    topIntakeMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 0, 10);
+    //initialize gyro
+    m_gyro.calibrate();
 
     //Reset encoder values
     topLeft.setSelectedSensorPosition(0,0,10);
@@ -140,7 +155,6 @@ public class Robot extends TimedRobot
    * <p>This runs after the mode specific periodic functions, but before
    * LiveWindow and SmartDashboard integrated updating.
    */
-  @Override
   public void robotPeriodic() {
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
@@ -157,31 +171,31 @@ public class Robot extends TimedRobot
   /**
    * This function is called once each time the robot enters Disabled mode.
    */
-  @Override
+
   public void disabledInit() {
-   
+    enableMotors(false);
   }
 
-  @Override
+
   public void disabledPeriodic() {
   }
 
   /**
    * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
    */
-  @Override
+
   public void autonomousInit() {
-    /*
+    
     encoder.reset();
     errorSum = 0;
     lastError = 0;
     lastTimestamp = Timer.getFPGATimestamp();
-   
+    enableMotors(true);
 
     topLeft.setSelectedSensorPosition(0,0,10);
     topRight.setSelectedSensorPosition(0,0,10);
     topIntakeMotor.setSelectedSensorPosition(0,0,10);
-*/
+
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
@@ -194,9 +208,9 @@ public class Robot extends TimedRobot
   /**
    * This function is called periodically during autonomous.
    */
-  @Override
+
   public void autonomousPeriodic() {
-/*
+
     //Driving in Auto
     if(isDriving == true && isTurning == false && isOuttaking == false) {
       //get sensor postion
@@ -333,7 +347,7 @@ else
 
    
 
-*/
+
 
   }
 
@@ -351,14 +365,16 @@ else
   /**
    * This function is called periodically during operator control.
    */
-  @Override
   public void teleopPeriodic() {
 
-     
+    double turningValue = (kAngleSetpoint - m_gyro.getAngle()) * kPgyro;
+		// Invert the direction of the turn if we are going backwards
+		//turningValue = Math.copySign(turningValue, m_joystick.getY());
+    //m_myRobot.arcadeDrive(m_joystick.getY(), turningValue);
+    SmartDashboard.putNumber("Potentiometer Value", m_gyro  .getAngle());
+    
+  }
 
-    }
-
-  @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
@@ -369,10 +385,29 @@ else
    */
   @Override
   public void testPeriodic() {
-
   }
 
   
 
- 
+  private void enableMotors(final boolean on) {
+
+    NeutralMode mode;
+
+    if(on) 
+    {
+      mode = NeutralMode.Brake;
+    }
+    else 
+    {
+      mode = NeutralMode.Coast;
+    }
+
+    topLeft.setNeutralMode(mode);
+    topRight.setNeutralMode(mode);
+    bottomLeft.setNeutralMode(mode);
+    bottomRight.setNeutralMode(mode);  
+    topIntakeMotor.setNeutralMode(mode);
+    bottomIntakeMotor.setNeutralMode(mode);
+
+  }
 }
