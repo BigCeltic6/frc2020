@@ -23,7 +23,13 @@ import frc.robot.commands.OperatePneumatics;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Pneumatics;;
+import frc.robot.subsystems.Pneumatics;
+
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.GyroBase;
+import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Encoder;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -46,6 +52,17 @@ public class Robot extends TimedRobot {
 
   public static double m_startTime;
 
+  public static final double kAngleSetpoint = 0.0;
+  public static final double kPgyro = 0.005; // propotional turning constant
+  public static final double kVoltsPerDegreePerSecond = 0.0128;
+  public static final SPI.Port kGyroPort = SPI.Port.kOnboardCS0;
+
+  public static final double kSamplePeriod = 0.001;
+  public static final double kCalibrationSampleTime = 5.0;
+  public static final double kDegreePerSecondPerLSB = 0.0125;
+
+  public static ADXRS450_Gyro m_gyro = new ADXRS450_Gyro();
+
   Command m_autonomousCommand;
   Command m_autonoumousTurnCommand;
   SendableChooser<Command> m_chooser = new SendableChooser<>();
@@ -60,6 +77,8 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", new AutonomousTurnCommand());
     m_chooser.addOption("Turn Auto", new AutonomousCommand());
     SmartDashboard.putData("Auto mode", m_chooser);
+    m_gyro.calibrate();
+
   }
 
   /**
@@ -143,6 +162,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    double turningValue = (kAngleSetpoint - m_gyro.getAngle()) * kPgyro;
+		// Invert the direction of the turn if we are going backwards
+		//turningValue = Math.copySign(turningValue, m_joystick.getY());
+    //m_myRobot.arcadeDrive(m_joystick.getY(), turningValue);
+    SmartDashboard.putNumber("Potentiometer Value", m_gyro.getAngle());
+    SmartDashboard.putNumber("Turning Value", turningValue);
     Scheduler.getInstance().run();
   }
 
